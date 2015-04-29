@@ -1,0 +1,7 @@
+<h1>Home#index</h1>
+
+<% if current_user %>
+  Logged in as <%= current_user.email %> | <%= link_to 'sign out', destroy_user_session_path, method: :delete %>
+<% else %>
+  <%= link_to 'sign in', new_user_session_path %> | <%= link_to 'sign up', new_user_registration_path %>
+<% end %>
