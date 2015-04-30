@@ -30,16 +30,6 @@ class AuthorizationControllerTest < ActionController::TestCase
     assert_redirected_to "http://test.host/foo"
   end
 
-  test "set_cookies with a token valid for a different host should not set cookies" do
-    user = User.create!(email: 'bob@example.com', password: 'password', password_confirmation: 'password')
-    ticket = user.tickets.create! service: 'http://example.com/foo'
-    get :set_cookies, :ticket => ticket.token
-    
-    assert_nil cookies['CloudFront-Policy']
-    assert_nil cookies['CloudFront-Signature']
-    assert_nil cookies['CloudFront-Key-Pair-Id']
-  end
-
   test "set_cookies with an invalid token should not set cookies" do
     get :set_cookies, :ticket => 'invalid'
     assert_nil cookies['CloudFront-Policy']
