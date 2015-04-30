@@ -9,7 +9,7 @@ class AuthorizationController < ApplicationController
       ticket = current_user.tickets.create! service: params[:service]
       redirect_to set_cookies_url(:ticket => ticket.token, :host => URI.parse(params[:service]).host)
     else
-      store_location_for(:user, get_ticket_path)
+      store_location_for(:user, get_ticket_path(service: params[:service]))
       redirect_to new_user_session_path
     end
   end

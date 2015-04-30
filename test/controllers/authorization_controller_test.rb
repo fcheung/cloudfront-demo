@@ -5,6 +5,7 @@ class AuthorizationControllerTest < ActionController::TestCase
   test "get_ticket redirects unlogged in users to the login page" do
     get :get_ticket, service: 'http://example.com/index.html'
     assert_redirected_to new_user_session_path
+    assert_equal get_ticket_path(service:'http://example.com/index.html'), @controller.stored_location_for(:user)
   end
 
   test "get_ticket redirects logged in users to the service url with a new ticket" do
