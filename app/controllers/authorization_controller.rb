@@ -1,4 +1,9 @@
 class AuthorizationController < ApplicationController
+  # Users are redirected here, on your app's domain by the cloudfront error page.
+  # If they are logged in then we create a ticket for them and redirect them to the set_cookies action
+  #
+  # We assume all users can access any content - in the real world you might want to check some property of the
+  # user before issuing the tickets
   def get_ticket
     if current_user
       ticket = current_user.tickets.create! service: params[:service]
@@ -9,6 +14,11 @@ class AuthorizationController < ApplicationController
     end
   end
 
+  # This action is always accessed via the cloudfront distribution. it verifies the ticket passed
+  # and if valid it sets the cloudfront cookies and redirects to the location  originally requested
+  #
+  # Tickets are destroyed after use.
+  #
   def set_cookies
     ticket = Ticket.find_by(token: params[:ticket])
     if ticket && request.host == URI.parse(ticket.service).host

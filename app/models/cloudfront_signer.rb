@@ -1,5 +1,11 @@
 class CloudfrontSigner
   class << self
+    #
+    # Returns a hash of cookie name / values to set.
+    #
+    # It expects as arguments the resource to protect and when the policy should expire
+    # 
+    # The policy method could be extended to support the other condtions Cloudfront supports (eg ip address)
     def cookie_data(resource, expiry)
       raw_policy = policy(resource, expiry)
       policy_data = safe_base64(raw_policy)
