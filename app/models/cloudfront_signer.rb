@@ -1,7 +1,7 @@
 class CloudfrontSigner
   class << self
-    def cookie_data(distribution_url)
-      raw_policy = policy(distribution_url)
+    def cookie_data(resource, expiry)
+      raw_policy = policy(resource, expiry)
       policy_data = safe_base64(raw_policy)
       signature = sign(raw_policy)
       {
@@ -13,13 +13,13 @@ class CloudfrontSigner
 
     private
 
-    def policy(url)
+    def policy(url, expiry)
       {
          "Statement"=> [
             {
                "Resource" => url,
                "Condition"=>{
-                  "DateLessThan" =>{"AWS:EpochTime"=> 12.hour.from_now.utc.to_i}
+                  "DateLessThan" =>{"AWS:EpochTime"=> expiry.utc.to_i}
                }
             }
          ]
