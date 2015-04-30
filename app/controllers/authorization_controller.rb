@@ -22,8 +22,8 @@ class AuthorizationController < ApplicationController
   def set_cookies
     ticket = Ticket.find_by(token: params[:ticket])
     if ticket && URI.parse(ticket.service).host
-      CloudfrontSigner.cookie_data("http*://#{URI.parse(ticket.service).host}/*", 1.hour.from_now).each do |name, value|
-        cookies[name] = value
+      CloudfrontSigner.cookie_data("http*://#{URI.parse(ticket.service).host}/*", 2.hour.from_now).each do |name, value|
+        cookies[name] = {:value => value, :httponly => true}
       end
       redirect_to ticket.service
       ticket.destroy!
