@@ -1,0 +1,129 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Cloudfront Demo Setup",
+  "Parameters": {
+    "BucketName": {
+      "Type": "String",
+      "Description": "Name of the bucket to create"
+    },
+    "AppLocation": {
+      "Type":"String",
+      "Description": "The DNS name you have deployed the app to (for example example.com)"
+    },
+    "AppProtocol": {
+      "Type":"String",
+      "Description": "The protocol cloudfront should use for requests to your app",
+      "AllowedValues": ["http-only", "match-viewer"]
+    },
+    "OriginAccessIdentity": {
+      "Type":"String",
+      "Description": "The value that CloudFront returned in the Id element when the origin access identity was created."
+    }
+  },
+  "Mappings":{},
+  "Conditions": {},
+  "Resources": {
+    "Bucket": {
+      "Type" : "AWS::S3::Bucket",
+      "Properties" : {
+         "AccessControl" : "Private",
+         "BucketName" : {"Ref": "BucketName"}
+       }
+    },
+
+    "BucketPolicy": {
+      "Type" : "AWS::S3::BucketPolicy",
+      "Properties" : {
+        "Bucket" : {"Ref": "Bucket"},
+        "PolicyDocument": {
+          "Version": "2008-10-17",
+          "Id": "PolicyForCloudFrontPrivateContent",
+          "Statement": [
+            {
+              "Sid": "1",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {"Fn::Join": [" ", ["arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity", {"Ref": "OriginAccessIdentity"}]]}
+              },
+              "Action": "s3:GetObject",
+              "Resource":  {"Fn::Join": ["", ["arn:aws:s3:::", {"Ref": "Bucket"}, "/*"]]}
+            }
+          ]
+        }
+      }
+    },
+
+    "Distribution":{
+      "Type": "AWS::CloudFront::Distribution",
+      "Properties": {
+        "DistributionConfig":{
+          "Enabled": true,
+          "Comment": "Cloudfrom signed cookies demo",
+          "Origins": [
+            {
+              "DomainName": {"Fn::GetAtt":[ "Bucket", "DomainName"]},
+              "Id": "S3",
+              "S3OriginConfig": {
+                "OriginAccessIdentity": {"Fn::Join": ["", ["origin-access-identity/cloudfront/", {"Ref": "OriginAccessIdentity"}]]}
+              }
+            },
+            {
+              "DomainName": {"Ref": "AppLocation"},
+              "Id": "Application",
+              "CustomOriginConfig": {
+                "OriginProtocolPolicy": {"Ref": "AppProtocol"}
+              }
+            }
+          ],
+          "CacheBehaviors": [
+            {
+              "TargetOriginId": "Application",
+              "PathPattern": "/authorization/*",
+              "ForwardedValues": {
+                "QueryString": true,
+                "Cookies": {
+                  "Forward": "whitelist",
+                  "WhitelistedNames": ["DUMMY"]
+                }
+              },
+              "ViewerProtocolPolicy": "allow-all"
+            },
+            {
+              "TargetOriginId": "S3",
+              "PathPattern": "/errors/*",
+              "ForwardedValues": {
+                "QueryString": false
+              },
+              "ViewerProtocolPolicy": "allow-all"
+            }
+
+          ],
+          "DefaultCacheBehavior": {
+            "TargetOriginId": "S3",
+            "ForwardedValues": {
+              "QueryString": false
+            },
+            "ViewerProtocolPolicy": "allow-all",
+            "TrustedSigners": ["self"]
+          },
+          "DefaultRootObject": "index.html",
+          "CustomErrorResponses": [
+            {
+              "ErrorCode": 403,
+              "ResponsePagePath": "/errors/403.html",
+              "ResponseCode": 403
+            }
+          ]
+        }
+      }    
+    }
+  },
+  "Outputs": {
+    "Distribution": {
+      "Value": {"Ref": "Distribution"}
+    },
+    "Bucket": {
+      "Value": {"Ref": "Bucket"}
+    }
+  }
+}

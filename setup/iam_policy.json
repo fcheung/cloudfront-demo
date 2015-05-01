@@ -1,0 +1,44 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "Stmt1430385921000",
+            "Effect": "Allow",
+            "Action": [
+                "cloudformation:CreateStack",
+                "cloudformation:DescribeStacks",
+                "cloudformation:ValidateTemplate"
+            ],
+            "Resource": [
+                "*"
+            ]
+        },
+        {
+            "Sid": "Stmt1430385938000",
+            "Effect": "Allow",
+            "Action": [
+                "s3:CreateBucket",
+                "s3:PutBucketPolicy",
+                "s3:PutObject",
+                "s3:PutObjectAcl"
+            ],
+            "Resource": [
+                "*"
+            ]
+        },
+        {
+            "Sid": "Stmt1430385983000",
+            "Effect": "Allow",
+            "Action": [
+                "cloudfront:CreateCloudFrontOriginAccessIdentity",
+                "cloudfront:CreateDistribution",
+                "cloudfront:GetDistributionConfig",
+                "cloudfront:GetDistribution",
+                "cloudfront:UpdateDistribution"
+            ],
+            "Resource": [
+                "*"
+            ]
+        }
+    ]
+}

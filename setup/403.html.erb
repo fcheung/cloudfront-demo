@@ -1,0 +1,11 @@
+<html>
+<title>Redirecting...</title>
+<body>
+<script>
+window.setTimeout(function(){
+  window.location="<%= app_location%>/authorization/get_ticket?service=https://<%= cloudfront_endpoint%>"
+}, 5000)
+</script>
+Redirecting you to the /get_ticket action in 5 seconds
+</body>
+</html>
