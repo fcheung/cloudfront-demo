@@ -8,11 +8,9 @@ class CloudfrontSigner
     # The policy method could be extended to support the other condtions Cloudfront supports (eg ip address)
     def cookie_data(resource, expiry)
       raw_policy = policy(resource, expiry)
-      policy_data = safe_base64(raw_policy)
-      signature = sign(raw_policy)
       {
-        'CloudFront-Policy' => policy_data,
-        'CloudFront-Signature' => signature,
+        'CloudFront-Policy' => safe_base64(raw_policy),
+        'CloudFront-Signature' => sign(raw_policy),
         'CloudFront-Key-Pair-Id' => ENV['CLOUDFRONT_KEY_PAIR_ID']
       }
     end
