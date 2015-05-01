@@ -31,7 +31,7 @@ class CloudfrontSigner
     end
 
     def safe_base64(data)
-      Base64.encode64(data).tr('+=/', '-_~').gsub(/\s+/,'')
+      Base64.strict_encode64(data).tr('+=/', '-_~')
     end
 
     def sign(data)
