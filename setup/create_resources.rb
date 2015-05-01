@@ -6,16 +6,26 @@ require 'erb'
 app_protocol = 'match-viewer'
 app_location = region = nil
 bucket_name = nil
+
 opts = OptionParser.new do |opts|
-  opts.on('--region REGION') {|value| region = value}
-  opts.on('--app-location APP_URL') {|value| app_location = value}
-  opts.on('--app-protocol APP_PROTOCOL') {|value| app_protocol = value}
-  opts.on('--bucket-name BUCKET_NAME') {|value| bucket_name = value}
+  opts.on('--region REGION', "The region to create resources in") {|value| region = value}
+  opts.on('--app-location APP_URL', "The location your app can be contacted at, eg https://foo.example.com") {|value| app_location = value}
+  opts.on('--app-protocol APP_PROTOCOL', "The viewer protocol cloudfront will use to connect to your app. Defaults to match-viewer") {|value| app_protocol = value}
+  opts.on('--bucket-name BUCKET_NAME', "The name of the S3 bucket to create") {|value| bucket_name = value}
 end
+
 opts.parse!
+
+unless region && app_location && app_protocol && bucket_name
+  puts opts
+  exit 1
+end
 cloudfront = Aws::CloudFront::Client.new region: region
 
 
+# Create a cloudfront origin access identity. There is a cap on the number of these that can be created
+# per account - you may wish to use an existing one instead
+#
 resp = cloudfront.create_cloud_front_origin_access_identity(
   cloud_front_origin_access_identity_config:{
       caller_reference: 'cloudfront-demo-origin-identity',
@@ -65,17 +75,15 @@ if stack.stack_status != "CREATE_COMPLETE"
 end
 
 puts "creating s3 content"
-distribution_id = stack.outputs.detect { |output| output.output_key = 'Distribution'}.output_value
-
-
-distribution = cloudfront.get_distribution(id: distribution_id).distribution
-
-# upload the 403.html file
+#Now upload the content we require
 
 s3 = Aws::S3::Client.new region: region
+distribution_id = stack.outputs.detect { |output| output.output_key = 'Distribution'}.output_value
+distribution = cloudfront.get_distribution(id: distribution_id).distribution
 
 cloudfront_endpoint = distribution.domain_name
 
+#this is the 403.html file that will redirect users into the authorization flow
 s3.put_object(acl: 'public-read',
               bucket: bucket_name,
               key: 'errors/403.html',
@@ -83,11 +91,12 @@ s3.put_object(acl: 'public-read',
               cache_control: 'max-age=300',
               body: ERB.new(File.read(File.join(File.dirname(__FILE__), '403.html.erb'))).result(binding))
 
+#this is just some dummy content so that you can test that protected content is accessible
 s3.put_object(bucket: bucket_name,
               key: 'index.html',
               content_type: 'text/html',
               cache_control: 'max-age=300',
               body: File.new(File.join(File.dirname(__FILE__), 'index.html')))
 
-puts "Setup compete: distribution url is https://#{cloudfront_endpoint}"
+puts "Setup complete: distribution url is https://#{cloudfront_endpoint}"
 
